@@ -2,71 +2,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hotel Bot Chat</title>
+  <title>Hotel Bot Trail</title>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #f1f1f1;
+      background: #ece5dd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
     .chat-container {
-      max-width: 500px;
-      margin: 40px auto;
+      width: 360px;
+      height: 600px;
       background: #fff;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
     }
-    .message {
-      margin: 10px 0;
+    .chat {
+      flex: 1;
       padding: 10px;
-      border-radius: 10px;
-    }
-    .bot {
-      background: #e0e0e0;
-      align-self: flex-start;
-    }
-    .user {
-      background: #0084ff;
-      color: white;
-      align-self: flex-end;
-    }
-    .chat-box {
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
     }
+    .message {
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 10px;
+      max-width: 80%;
+    }
+    .bot {
+      align-self: flex-start;
+      background-color: #dcf8c6;
+    }
+    .user {
+      align-self: flex-end;
+      background-color: #34b7f1;
+      color: white;
+    }
     .input-area {
       display: flex;
-      margin-top: 20px;
+      padding: 10px;
+      border-top: 1px solid #ccc;
     }
-    input[type="text"] {
+    .input-area input {
       flex: 1;
       padding: 10px;
-      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      outline: none;
     }
-    button {
-      padding: 10px 20px;
-      background: #0084ff;
+    .input-area button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      background-color: #128c7e;
       color: white;
       border: none;
+      border-radius: 20px;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="chat-container">
-    <div class="chat-box" id="chatBox">
-      <div class="message bot">Welcome to Hotel Bot 🏨<br>Type 'book' to start booking</div>
+    <div class="chat" id="chat">
+      <div class="bot message">Welcome to Zippy Stays! ✨</div>
     </div>
     <div class="input-area">
       <input type="text" id="userInput" placeholder="Type a message..." />
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>  <script>
-    const chatBox = document.getElementById('chatBox');
-    const userInput = document.getElementById('userInput');
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("userInput");
+
+    const botFlow = [
+      "Please choose room type:\n1. Standard\n2. Deluxe\n3. Suite",
+      "Deluxe room selected – ₹1999/night",
+      "Enter number of nights:",
+      "Total ₹3998. Confirm booking?",
+      "Booking confirmed ✅",
+      "<a href='payment.html' target='_blank'>Click to pay ₹3998</a>"
+    ];
+
+    let step = 0;
 
     function sendMessage() {
-      const msg = userInput.value.trim();
-      if (!msg) return;
-      addMessage
+      const text = input.value.trim();
+      if (!text) return;
+
+      const userMsg = document.createElement("div");
+      userMsg.className = "user message";
+      userMsg.textContent = text;
+      chat.appendChild(userMsg);
+      input.value = "";
+      chat.scrollTop = chat.scrollHeight;
+
+      setTimeout(() => {
+        const botMsg = document.createElement("div");
+        botMsg.className = "bot message";
+        botMsg.innerHTML = botFlow[step] || "Thank you!";
+        chat.appendChild(botMsg);
+        chat.scrollTop = chat.scrollHeight;
+        step++;
+      }, 1000);
+    }
+  </script></body>
+</html>
