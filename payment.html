@@ -1,59 +1,72 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-  <title>Hotel Booking Payment</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hotel Bot Chat</title>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      background: #f8f8f8;
+      background: #f1f1f1;
+    }
+    .chat-container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       padding: 20px;
     }
-    .container {
-      background: white;
-      max-width: 400px;
-      margin: auto;
-      padding: 30px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    input[type="text"], input[type="number"] {
-      width: 100%;
+    .message {
+      margin: 10px 0;
       padding: 10px;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 10px;
+    }
+    .bot {
+      background: #e0e0e0;
+      align-self: flex-start;
+    }
+    .user {
+      background: #0084ff;
+      color: white;
+      align-self: flex-end;
+    }
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+    }
+    .input-area {
+      display: flex;
+      margin-top: 20px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
     }
     button {
-      width: 100%;
-      margin-top: 20px;
-      padding: 12px;
-      background: #28a745;
+      padding: 10px 20px;
+      background: #0084ff;
       color: white;
-      font-size: 16px;
       border: none;
-      border-radius: 5px;
-    }
-    .note {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 12px;
-      color: gray;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Make a Payment</h2>
-    <input type="text" placeholder="Full Name">
-    <input type="text" placeholder="Card Number">
-    <input type="text" placeholder="MM/YY">
-    <input type="number" placeholder="CVV">
-    <button>Pay ₹999</button>
-    <div class="note">This is a demo page. Payment not processed.</div>
-  </div>
-</body>
-</html>
+  <div class="chat-container">
+    <div class="chat-box" id="chatBox">
+      <div class="message bot">Welcome to Hotel Bot 🏨<br>Type 'book' to start booking</div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>  <script>
+    const chatBox = document.getElementById('chatBox');
+    const userInput = document.getElementById('userInput');
+
+    function sendMessage() {
+      const msg = userInput.value.trim();
+      if (!msg) return;
+      addMessage
