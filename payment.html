@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hotel Sunrise – Payment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 400px;
+      margin: 40px auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #d35400;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #27ae60;
+      color: #fff;
+      font-size: 16px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #219150;
+    }
+    .note {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Hotel Sunrise</h2>
+    <p><strong>Booking ID:</strong> HS-4927</p>
+    <p><strong>Amount:</strong> ₹1,199</p>
+
+    <label for="name">Full Name</label>
+    <input type="text" id="name" placeholder="Pakodi" />
+
+    <label for="upi">UPI ID / Card Number</label>
+    <input type="text" id="upi" placeholder="you@upi or 1234-XXXX-XXXX-XXXX" />
+
+    <button onclick="alert('✅ Payment Successful! Booking Confirmed.')">
+      Confirm Payment
+    </button>
+
+    <p class="note">This is a demo page for testing purposes only.</p>
+  </div>
+</body>
+</html>
