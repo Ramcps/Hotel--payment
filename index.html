@@ -79,162 +79,54 @@
   </style>
 </head>
 <body>
-  <div class="chat-container">
-    <div class="chat-box" id="chat"></div>
-    <div class="input-area">
-      <input type="text" id="userInput" placeholder="Type only if needed..." />
-      <button onclick="sendMessage()">Send</button>
-    </div>
+<div class="chat-container">
+  <div class="chat-box" id="chat"></div>
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="Type only if needed..." />
+    <button onclick="sendMessage()">Send</button>
   </div>
+</div>
 
-  <script>
-    const chat = document.getElementById("chat");
-    const input = document.getElementById("userInput");
-    let state = "start";
-    let memory = {};
+<script>
+  const chat = document.getElementById("chat");
+  const input = document.getElementById("userInput");
+  let state = "start";
+  let memory = {};
 
-    function addMessage(text, sender = 'bot') {
-      const div = document.createElement("div");
-      div.className = `message ${sender}`;
-      div.innerHTML = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
+  function addMessage(text, sender = 'bot') {
+    const div = document.createElement("div");
+    div.className = `message ${sender}`;
+    div.innerHTML = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
 
-    function sendMessage() {
-      const text = input.value.trim();
-      if (!text) return;
-      addMessage(text, 'user');
-      input.value = '';
-      handleChat(text);
-    }
+  function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage(text, 'user');
+    input.value = '';
+    handleChat(text);
+  }
 
-    function showOptions(options, callback) {
-      const div = document.createElement("div");
-      div.className = "options";
-      options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.textContent = opt;
-        btn.onclick = () => {
-          addMessage(opt, 'user');
-          chat.removeChild(div);
-          callback(opt);
-        };
-        div.appendChild(btn);
-      });
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    function initChat() {
-      addMessage("Welcome to Zippy Stays! 🏨");
-      showOptions(["1. Room Booking", "2. Room Availability", "3. Support"], handleChat);
-    }
-
-    function handleChat(text) {
-      if (state === "start") {
-        if (text.startsWith('1')) {
-          state = "room_type";
-          addMessage("Choose Room Type:");
-          showOptions(['1. AC', '2. Non-AC'], handleRoomType);
-        } else if (text.startsWith('2')) {
-          addMessage("AC Rooms Available: 3<br>Non-AC Rooms Available: 5");
-          showOptions(["Book Now", "Cancel"], handleRoomType);
-        } else if (text.startsWith('3')) {
-          addMessage("📞 Support: Call 1800-ZIPPY");
-        }
-      } else if (state === "name") {
-        if (!/^[a-zA-Z .]+$/.test(text)) {
-          addMessage("❌ Name must only contain letters, space, or dot.");
-          return;
-        }
-        memory.name = text;
-        state = "id_proof";
-        addMessage("Select ID Proof:");
-        showOptions(["Aadhaar", "Passport", "Submit at Hotel"], handleIdProof);
-      } else if (state === "id_number") {
-        memory.id_number = text;
-        state = "nights";
-        addMessage("How many days?");
-        showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
-      } else if (state === "nights") {
-        if (!/^\d+$/.test(text)) {
-          addMessage("❌ Please enter number of days using digits only (e.g., 1, 2, 3).");
-          return;
-        }
-        memory.nights = text;
-        state = "date";
-        input.type = "text";
-        input.placeholder = "";
-        addMessage("Select your booking date:");
-        showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
-      } else if (state === "confirm") {
-        if (text.toLowerCase() === "yes") {
-          addMessage("✅ Booking confirmed. Dummy Payment Processing...");
-        } else {
-          addMessage("❌ Booking cancelled.");
-        }
-      }
-    }
-
-    function handleRoomType(choice) {
-      state = "room_category";
-      memory.room_type = choice.includes("AC") ? "AC" : "Non-AC";
-      addMessage("Select Room:");
-      const prices = memory.room_type === "AC"
-        ? ["Single - ₹1499", "Double - ₹1999", "Suite - ₹2499"]
-        : ["Single - ₹999", "Double - ₹1499", "Suite - ₹1999"];
-      showOptions(prices, askName);
-    }
-
-    function askName() {
-      state = "name";
-      input.type = "text";
-      input.placeholder = "Enter your name (letters only)";
-      input.oninput = function () {
-        this.value = this.value.replace(/[^a-zA-Z .]/g, '');
+  function showOptions(options, callback) {
+    const div = document.createElement("div");
+    div.className = "options";
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.textContent = opt;
+      btn.onclick = () => {
+        addMessage(opt, 'user');
+        chat.removeChild(div);
+        callback(opt);
       };
-      addMessage("Please enter your full name:");
-    }
+      div.appendChild(btn);
+    });
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
 
-    function handleIdProof(choice) {
-      memory.id_type = choice;
-      if (choice.includes("Submit")) {
-        memory.id_number = "To be submitted at hotel";
-        state = "nights";
-        addMessage("How many days?");
-        showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
-      } else {
-        state = "id_number";
-        addMessage("Enter ID number:");
-      }
-    }
-
-    function handleNights(choice) {
-      if (choice.includes("Day")) {
-        memory.nights = choice.split(" ")[0];
-        state = "date";
-        addMessage("Select your booking date:");
-        showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
-      } else {
-        state = "nights";
-        input.setAttribute("inputmode", "numeric");
-        input.setAttribute("pattern", "[0-9]*");
-        input.type = "text";
-        input.placeholder = "Enter number of days (digits only)";
-        input.value = '';
-        addMessage("Enter number of days (numbers only):");
-      }
-    }
-
-    function handleDate(choice) {
-      memory.date = choice;
-      state = "confirm";
-      const idMasked = memory.id_number ? memory.id_number.replace(/.(?=.{4})/g, "X") : "";
-      addMessage(`Confirm booking:<br>Name: ${memory.name}<br>Room: ${memory.room_type}<br>Nights: ${memory.nights}<br>Date: ${memory.date}<br>ID: ${idMasked}<br><br>Type 'yes' to confirm.`);
-    }
-
-    window.onload = initChat;
-  </script>
-</body>
-</html>
+  function initChat() {
+    addMessage("Welcome to Zippy Stays! 🏨");
+    showOptions(["1. Room Booking", "2. Room Availability", "3. Support"], handleChat);
+  }
