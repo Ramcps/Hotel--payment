@@ -40,15 +40,8 @@
       font-size: 15px;
       line-height: 1.4;
     }
-    .bot {
-      background: #e1f5fe;
-      align-self: flex-start;
-    }
-    .user {
-      background: #007aff;
-      color: white;
-      align-self: flex-end;
-    }
+    .bot { background: #e1f5fe; align-self: flex-start; }
+    .user { background: #007aff; color: white; align-self: flex-end; }
     .input-area {
       display: flex;
       border-top: 1px solid #ccc;
@@ -79,7 +72,6 @@
       border-radius: 20px;
       background-color: #eeeeee;
       cursor: pointer;
-      transition: background-color 0.3s;
     }
     .options button:hover {
       background-color: #d0d0d0;
@@ -153,7 +145,7 @@
         }
       } else if (state === "name") {
         if (!/^[a-zA-Z .]+$/.test(text)) {
-          addMessage("❌ Name must only contain letters, space, dot.");
+          addMessage("❌ Name must only contain letters, space, or dot.");
           return;
         }
         memory.name = text;
@@ -166,14 +158,16 @@
         addMessage("How many days?");
         showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
       } else if (state === "nights") {
-        if (text.toLowerCase().includes("custom")) {
-          addMessage("Enter number of days:");
-        } else {
-          memory.nights = text.split(" ")[0];
-          state = "date";
-          addMessage("Select your booking date:");
-          showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
+        if (!/^\d+$/.test(text)) {
+          addMessage("❌ Please enter number of days using digits only (e.g., 1, 2, 3).");
+          return;
         }
+        memory.nights = text;
+        state = "date";
+        input.type = "text";
+        input.placeholder = "";
+        addMessage("Select your booking date:");
+        showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
       } else if (state === "confirm") {
         if (text.toLowerCase() === "yes") {
           addMessage("✅ Booking confirmed. Dummy Payment Processing...");
@@ -195,6 +189,7 @@
 
     function askName() {
       state = "name";
+      input.type = "text";
       input.placeholder = "Enter your name (letters only)";
       input.oninput = function () {
         this.value = this.value.replace(/[^a-zA-Z .]/g, '');
@@ -222,14 +217,20 @@
         addMessage("Select your booking date:");
         showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
       } else {
-        addMessage("Enter number of days:");
+        state = "nights";
+        input.setAttribute("inputmode", "numeric");
+        input.setAttribute("pattern", "[0-9]*");
+        input.type = "text";
+        input.placeholder = "Enter number of days (digits only)";
+        input.value = '';
+        addMessage("Enter number of days (numbers only):");
       }
     }
 
     function handleDate(choice) {
       memory.date = choice;
       state = "confirm";
-      const idMasked = memory.id_number.replace(/.(?=.{4})/g, "X");
+      const idMasked = memory.id_number ? memory.id_number.replace(/.(?=.{4})/g, "X") : "";
       addMessage(`Confirm booking:<br>Name: ${memory.name}<br>Room: ${memory.room_type}<br>Nights: ${memory.nights}<br>Date: ${memory.date}<br>ID: ${idMasked}<br><br>Type 'yes' to confirm.`);
     }
 
