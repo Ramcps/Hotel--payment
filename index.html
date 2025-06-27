@@ -130,3 +130,122 @@
     addMessage("Welcome to Zippy Stays! 🏨");
     showOptions(["1. Room Booking", "2. Room Availability", "3. Support"], handleChat);
   }
+
+  function handleChat(text) {
+    if (state === "start") {
+      if (text.startsWith('1')) {
+        state = "room_type";
+        addMessage("Choose Room Type:");
+        showOptions(['1. AC', '2. Non-AC'], handleRoomType);
+      } else if (text.startsWith('2')) {
+        addMessage("AC Rooms Available: 3<br>Non-AC Rooms Available: 5");
+        showOptions(["Book Now", "Cancel"], handleRoomType);
+      } else if (text.startsWith('3')) {
+        addMessage("📞 Support: Call 1800-ZIPPY");
+      }
+    } else if (state === "name") {
+      if (!/^[a-zA-Z .]+$/.test(text)) {
+        addMessage("❌ Name must only contain letters, space, or dot.");
+        return;
+      }
+      memory.name = text;
+      state = "id_proof";
+      addMessage("Select ID Proof:");
+      showOptions(["Aadhaar", "Passport", "Submit at Hotel"], handleIdProof);
+    } else if (state === "id_number") {
+      memory.id_number = text;
+      state = "nights";
+      addMessage("How many days?");
+      showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
+    } else if (state === "waiting_custom_days") {
+      if (!/^\d+$/.test(text)) {
+        addMessage("❌ Please enter number of days using digits only.");
+        return;
+      }
+      memory.nights = text;
+      state = "date";
+      input.type = "text";
+      input.placeholder = "";
+      addMessage("Select your booking date:");
+      showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
+    } else if (state === "confirm") {
+      if (text.toLowerCase() === "yes") {
+        addMessage("✅ Booking confirmed.<br><br>Redirecting to dummy payment page...");
+        setTimeout(() => {
+          addMessage("💳 Dummy Payment Successful! ✅<br><br>Booking ID: ZPY" + Math.floor(Math.random() * 9000 + 1000));
+        }, 2000);
+      } else {
+        addMessage("❌ Booking cancelled.");
+      }
+    }
+  }
+
+  function handleRoomType(choice) {
+    state = "room_category";
+    memory.room_type = choice.includes("AC") ? "AC" : "Non-AC";
+    addMessage("Select Room:");
+    const prices = memory.room_type === "AC"
+      ? ["Single - ₹1499", "Double - ₹1999", "Suite - ₹2499"]
+      : ["Single - ₹999", "Double - ₹1499", "Suite - ₹1999"];
+    showOptions(prices, askName);
+  }
+
+  function askName() {
+    state = "name";
+    input.type = "text";
+    input.placeholder = "Enter your name";
+    input.oninput = function () {
+      this.value = this.value.replace(/[^a-zA-Z .]/g, '');
+    };
+    addMessage("Enter your full name:");
+  }
+
+  function handleIdProof(choice) {
+    memory.id_type = choice;
+    if (choice.includes("Submit")) {
+      memory.id_number = "To be submitted at hotel";
+      state = "nights";
+      addMessage("How many days?");
+      showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
+    } else {
+      state = "id_number";
+      addMessage("Enter ID number:");
+    }
+  }
+
+  function handleNights(choice) {
+    if (choice.includes("Day")) {
+      memory.nights = choice.split(" ")[0];
+      state = "date";
+      addMessage("Select your booking date:");
+      showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
+    } else {
+      state = "waiting_custom_days";
+      input.setAttribute("inputmode", "numeric");
+      input.setAttribute("pattern", "[0-9]*");
+      input.type = "text";
+      input.placeholder = "Enter number of days";
+      input.value = '';
+      addMessage("Enter number of days (numbers only):");
+    }
+  }
+
+  function handleDate(choice) {
+    memory.date = choice;
+    state = "confirm";
+    const idMasked = memory.id_number ? memory.id_number.replace(/.(?=.{4})/g, "X") : "";
+    const base = memory.room_type.includes("AC") ? 1499 : 999;
+    const totalBase = base * parseInt(memory.nights);
+    const gst = totalBase * 0.12;
+    const grandTotal = totalBase + gst;
+    memory.total = grandTotal.toFixed(2);
+    addMessage(
+      `Confirm booking:<br>Name: ${memory.name}<br>Room: ${memory.room_type}<br>Nights: ${memory.nights}<br>Date: ${memory.date}<br>ID: ${idMasked}<br>` +
+      `Base: ₹${totalBase}<br>GST (12%): ₹${gst.toFixed(2)}<br><b>Total: ₹${grandTotal.toFixed(2)}</b><br><br>Type 'yes' to confirm.`
+    );
+  }
+
+  window.onload = initChat;
+</script>
+</body>
+</html>
