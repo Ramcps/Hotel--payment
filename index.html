@@ -3,29 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hotel Booking Chat Bot</title>
+  <title>Hotel Booking Bot</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .chat-container { width: 380px; height: 600px; background: white; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
-    .chat-box { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; }
-    .message { margin: 5px; padding: 8px 12px; border-radius: 15px; max-width: 75%; }
-    .bot { background-color: #e0f7fa; align-self: flex-start; }
-    .user { background-color: #007aff; color: white; align-self: flex-end; }
-    .input-area { display: flex; border-top: 1px solid #ddd; }
-    .input-area input { flex: 1; padding: 10px; border: none; }
-    .input-area button { padding: 10px; background: #007aff; color: white; border: none; }
-    .options { display: flex; flex-wrap: wrap; margin-top: 10px; }
-    .options button { margin: 4px; padding: 6px 12px; border: none; border-radius: 6px; background-color: #f1f1f1; cursor: pointer; }
+    body {
+      margin: 0;
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      width: 400px;
+      height: 620px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-box {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin: 6px 0;
+      padding: 10px 14px;
+      border-radius: 20px;
+      max-width: 80%;
+      word-wrap: break-word;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .bot {
+      background: #e1f5fe;
+      align-self: flex-start;
+    }
+    .user {
+      background: #007aff;
+      color: white;
+      align-self: flex-end;
+    }
+    .input-area {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      font-size: 14px;
+    }
+    .input-area button {
+      background: #007aff;
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .options button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 20px;
+      background-color: #eeeeee;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .options button:hover {
+      background-color: #d0d0d0;
+    }
   </style>
 </head>
 <body>
   <div class="chat-container">
     <div class="chat-box" id="chat"></div>
     <div class="input-area">
-      <input type="text" id="userInput" placeholder="Type here only when necessary..." />
+      <input type="text" id="userInput" placeholder="Type only if needed..." />
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
+
   <script>
     const chat = document.getElementById("chat");
     const input = document.getElementById("userInput");
@@ -74,64 +143,54 @@
       if (state === "start") {
         if (text.startsWith('1')) {
           state = "room_type";
-          addMessage("Please choose Room Type:");
+          addMessage("Choose Room Type:");
           showOptions(['1. AC', '2. Non-AC'], handleRoomType);
         } else if (text.startsWith('2')) {
-          addMessage("Available Rooms: AC (3), Non-AC (5)");
-          addMessage("Do you want to book a room?");
-          showOptions(['1. Yes, Book Room', '2. No'], handleRoomType);
+          addMessage("AC Rooms Available: 3<br>Non-AC Rooms Available: 5");
+          showOptions(["Book Now", "Cancel"], handleRoomType);
         } else if (text.startsWith('3')) {
-          addMessage("Support: 📞 Call 1800-ZIPPY");
+          addMessage("📞 Support: Call 1800-ZIPPY");
         }
       } else if (state === "name") {
         if (!/^[a-zA-Z .]+$/.test(text)) {
-          addMessage("❌ Name should contain only letters, space, dot or hyphen.");
+          addMessage("❌ Name must only contain letters, space, dot.");
           return;
         }
         memory.name = text;
         state = "id_proof";
         addMessage("Select ID Proof:");
-        showOptions(["1. Aadhaar", "2. Passport", "3. Submit at Hotel"], handleIdProof);
+        showOptions(["Aadhaar", "Passport", "Submit at Hotel"], handleIdProof);
       } else if (state === "id_number") {
         memory.id_number = text;
         state = "nights";
-        addMessage("How many days do you want to stay?");
+        addMessage("How many days?");
         showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
       } else if (state === "nights") {
-        if (text.includes("Day")) {
+        if (text.toLowerCase().includes("custom")) {
+          addMessage("Enter number of days:");
+        } else {
           memory.nights = text.split(" ")[0];
           state = "date";
           addMessage("Select your booking date:");
-          showOptions(["Today", "Tomorrow", "Choose from Calendar"], handleDate);
-        } else if (text.toLowerCase().includes("custom")) {
-          addMessage("Please type how many days:");
-        } else {
-          memory.nights = text;
-          state = "date";
-          addMessage("Select your booking date:");
-          showOptions(["Today", "Tomorrow", "Choose from Calendar"], handleDate);
+          showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
         }
       } else if (state === "confirm") {
         if (text.toLowerCase() === "yes") {
-          addMessage("✅ Payment Processing... (Dummy Page)");
-          addMessage("🧾 Booking Confirmed! GST Bill will be sent to your email.");
+          addMessage("✅ Booking confirmed. Dummy Payment Processing...");
         } else {
-          addMessage("❌ Booking Cancelled.");
+          addMessage("❌ Booking cancelled.");
         }
       }
     }
 
     function handleRoomType(choice) {
       state = "room_category";
-      if (choice.startsWith('1')) {
-        memory.room_type = "AC";
-        addMessage("Select AC Room Type:");
-        showOptions(['1. Single - ₹1499', '2. Double - ₹1999', '3. Suite - ₹2499'], askName);
-      } else {
-        memory.room_type = "Non-AC";
-        addMessage("Select Non-AC Room Type:");
-        showOptions(['1. Single - ₹999', '2. Double - ₹1499', '3. Suite - ₹1999'], askName);
-      }
+      memory.room_type = choice.includes("AC") ? "AC" : "Non-AC";
+      addMessage("Select Room:");
+      const prices = memory.room_type === "AC"
+        ? ["Single - ₹1499", "Double - ₹1999", "Suite - ₹2499"]
+        : ["Single - ₹999", "Double - ₹1499", "Suite - ₹1999"];
+      showOptions(prices, askName);
     }
 
     function askName() {
@@ -146,14 +205,13 @@
     function handleIdProof(choice) {
       memory.id_type = choice;
       if (choice.includes("Submit")) {
-        memory.id_number = "(To be submitted at Hotel)";
+        memory.id_number = "To be submitted at hotel";
         state = "nights";
-        addMessage("How many days do you want to stay?");
+        addMessage("How many days?");
         showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
       } else {
         state = "id_number";
-        input.placeholder = "Enter ID Number";
-        addMessage("Enter your ID Number:");
+        addMessage("Enter ID number:");
       }
     }
 
@@ -162,18 +220,17 @@
         memory.nights = choice.split(" ")[0];
         state = "date";
         addMessage("Select your booking date:");
-        showOptions(["Today", "Tomorrow", "Choose from Calendar"], handleDate);
+        showOptions(["Today", "Tomorrow", "Choose Date"], handleDate);
       } else {
-        addMessage("Please type how many days:");
-        state = "nights";
+        addMessage("Enter number of days:");
       }
     }
 
     function handleDate(choice) {
       memory.date = choice;
       state = "confirm";
-      const idMasked = memory.id_number ? memory.id_number.replace(/.(?=.{4})/g, "X") : "";
-      addMessage(`Please confirm your booking:<br>Name: ${memory.name}<br>Room: ${memory.room_type}<br>Nights: ${memory.nights}<br>ID: ${idMasked}<br>Date: ${memory.date}<br><br>Type 'yes' to confirm.`);
+      const idMasked = memory.id_number.replace(/.(?=.{4})/g, "X");
+      addMessage(`Confirm booking:<br>Name: ${memory.name}<br>Room: ${memory.room_type}<br>Nights: ${memory.nights}<br>Date: ${memory.date}<br>ID: ${idMasked}<br><br>Type 'yes' to confirm.`);
     }
 
     window.onload = initChat;
