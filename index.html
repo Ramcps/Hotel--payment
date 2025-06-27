@@ -1,7 +1,8 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hotel Booking Chat Bot</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
@@ -19,17 +20,13 @@
 </head>
 <body>
   <div class="chat-container">
-    <div class="chat-box" id="chat">
-      <div class="message bot">Welcome to Zippy Stays! 🏨<br>
-        1. Room Booking<br>
-        2. Room Availability<br>
-        3. Support</div>
-    </div>
+    <div class="chat-box" id="chat"></div>
     <div class="input-area">
       <input type="text" id="userInput" placeholder="Type here only when necessary..." />
       <button onclick="sendMessage()">Send</button>
     </div>
-  </div>  <script>
+  </div>
+  <script>
     const chat = document.getElementById("chat");
     const input = document.getElementById("userInput");
     let state = "start";
@@ -51,17 +48,39 @@
       handleChat(text);
     }
 
+    function showOptions(options, callback) {
+      const div = document.createElement("div");
+      div.className = "options";
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.onclick = () => {
+          addMessage(opt, 'user');
+          chat.removeChild(div);
+          callback(opt);
+        };
+        div.appendChild(btn);
+      });
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function initChat() {
+      addMessage("Welcome to Zippy Stays! 🏨");
+      showOptions(["1. Room Booking", "2. Room Availability", "3. Support"], handleChat);
+    }
+
     function handleChat(text) {
       if (state === "start") {
-        if (text === '1') {
+        if (text.startsWith('1')) {
           state = "room_type";
           addMessage("Please choose Room Type:");
           showOptions(['1. AC', '2. Non-AC'], handleRoomType);
-        } else if (text === '2') {
+        } else if (text.startsWith('2')) {
           addMessage("Available Rooms: AC (3), Non-AC (5)");
           addMessage("Do you want to book a room?");
           showOptions(['1. Yes, Book Room', '2. No'], handleRoomType);
-        } else if (text === '3') {
+        } else if (text.startsWith('3')) {
           addMessage("Support: 📞 Call 1800-ZIPPY");
         }
       } else if (state === "name") {
@@ -77,11 +96,21 @@
         memory.id_number = text;
         state = "nights";
         addMessage("How many days do you want to stay?");
+        showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
       } else if (state === "nights") {
-        memory.nights = text;
-        state = "date";
-        addMessage("Select your booking date:");
-        showOptions(["Today", "Tomorrow", "Choose from Calendar"], handleDate);
+        if (text.includes("Day")) {
+          memory.nights = text.split(" ")[0];
+          state = "date";
+          addMessage("Select your booking date:");
+          showOptions(["Today", "Tomorrow", "Choose from Calendar"], handleDate);
+        } else if (text.toLowerCase().includes("custom")) {
+          addMessage("Please type how many days:");
+        } else {
+          memory.nights = text;
+          state = "date";
+          addMessage("Select your booking date:");
+          showOptions(["Today", "Tomorrow", "Choose from Calendar"], handleDate);
+        }
       } else if (state === "confirm") {
         if (text.toLowerCase() === "yes") {
           addMessage("✅ Payment Processing... (Dummy Page)");
@@ -108,7 +137,7 @@
     function askName() {
       state = "name";
       input.placeholder = "Enter your name (letters only)";
-      input.oninput = function() {
+      input.oninput = function () {
         this.value = this.value.replace(/[^a-zA-Z .]/g, '');
       };
       addMessage("Please enter your full name:");
@@ -120,6 +149,7 @@
         memory.id_number = "(To be submitted at Hotel)";
         state = "nights";
         addMessage("How many days do you want to stay?");
+        showOptions(["1 Day", "2 Days", "3 Days", "Custom"], handleNights);
       } else {
         state = "id_number";
         input.placeholder = "Enter ID Number";
@@ -127,28 +157,26 @@
       }
     }
 
+    function handleNights(choice) {
+      if (choice.includes("Day")) {
+        memory.nights = choice.split(" ")[0];
+        state = "date";
+        addMessage("Select your booking date:");
+        showOptions(["Today", "Tomorrow", "Choose from Calendar"], handleDate);
+      } else {
+        addMessage("Please type how many days:");
+        state = "nights";
+      }
+    }
+
     function handleDate(choice) {
       memory.date = choice;
       state = "confirm";
-      const idMasked = memory.id_number.replace(/.(?=.{4})/g, "X");
-      addMessage(`Please confirm your booking:\nName: ${memory.name}\nRoom: ${memory.room_type}\nNights: ${memory.nights}\nID: ${idMasked}\nDate: ${memory.date}\n\nType 'yes' to confirm.`);
+      const idMasked = memory.id_number ? memory.id_number.replace(/.(?=.{4})/g, "X") : "";
+      addMessage(`Please confirm your booking:<br>Name: ${memory.name}<br>Room: ${memory.room_type}<br>Nights: ${memory.nights}<br>ID: ${idMasked}<br>Date: ${memory.date}<br><br>Type 'yes' to confirm.`);
     }
 
-    function showOptions(options, callback) {
-      const div = document.createElement("div");
-      div.className = "options";
-      options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.textContent = opt;
-        btn.onclick = () => {
-          addMessage(opt, 'user');
-          chat.removeChild(div);
-          callback(opt);
-        };
-        div.appendChild(btn);
-      });
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
-  </script></body>
+    window.onload = initChat;
+  </script>
+</body>
 </html>
