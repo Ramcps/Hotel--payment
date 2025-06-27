@@ -65,7 +65,7 @@
     </div>
     <div class="input-area">
       <input type="text" id="userInput" placeholder="Type a message..." />
-      <button onclick="sendMessage()">Send</button>
+      <button id="sendBtn">Send</button>
     </div>
   </div>
 
@@ -89,19 +89,28 @@
 
     function sendMessage() {
       const text = input.value.trim();
-      if (!text) return; console.log("No input provided");
-
+      if (!text) return;
       addMessage(text, "user");
       input.value = "";
       handleInput(text);
     }
 
     function handleInput(inputText) {
+      const t = inputText.toLowerCase();
       console.log("User input:", inputText);
       console.log("Current state:", state);
-      const t = inputText.toLowerCase();
 
       if (state === "start") {
+        if (t === "1" || t.includes("availability")) {
+          state = "start";
+          addMessage("All rooms available ✅<br>AC Standard – ₹1499<br>AC Deluxe – ₹1999<br>AC Suite – ₹2999<br>Non-AC Standard – ₹999<br>Non-AC Double Bed – ₹1299<br><br>To book, type 2");
+          return;
+        }
+        if (t === "3" || t.includes("support")) {
+          state = "start";
+          addMessage("📞 Contact Support:<br>Call us: 1800-123-ZIPPY<br>WhatsApp: <a href='https://wa.me/919876543210' target='_blank'>Chat Now</a>");
+          return;
+        }
         if (t === "2" || t.includes("book")) {
           state = "roomType";
           addMessage("Please select room type:<br>1. AC<br>2. Non-AC");
@@ -160,7 +169,16 @@
           today.setDate(today.getDate() + 1);
           memory.checkinDate = today.toDateString();
         } else {
-          memory.checkinDate = "30 June 2025";
+          addMessage("📅 Please select your check-in date:");
+      const dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.onchange = () => {
+        memory.checkinDate = new Date(dateInput.value).toDateString();
+        proceedToConfirmation();
+      };
+      chat.appendChild(dateInput);
+      chat.scrollTop = chat.scrollHeight;
+      return;
         }
         let base = memory.roomPrice * memory.nights;
         let gst = +(base * 0.12).toFixed(2);
@@ -168,7 +186,8 @@
         memory.total = total;
         memory.gst = gst;
 
-        state = "confirm"; console.log("Moving to confirmation");
+        state = "confirm";
+        console.log("Moving to confirmation");
         addMessage(`Booking Summary:<br>
 Name: ${memory.name}<br>
 Room: ${memory.roomType} ${memory.roomName}<br>
@@ -183,6 +202,13 @@ Total: ₹${total}<br><br>Confirm booking? (Yes/No)`);
         addMessage("Booking Confirmed ✅<br><a href='payment.html' target='_blank'>Click here to pay ₹" + memory.total + "</a>");
       }
     }
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    input.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
   </script>
 </body>
 </html>
