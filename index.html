@@ -89,7 +89,7 @@
 
     function sendMessage() {
       const text = input.value.trim();
-      if (!text) return;
+      if (!text) return; console.log("No input provided");
 
       addMessage(text, "user");
       input.value = "";
@@ -97,6 +97,8 @@
     }
 
     function handleInput(inputText) {
+      console.log("User input:", inputText);
+      console.log("Current state:", state);
       const t = inputText.toLowerCase();
 
       if (state === "start") {
@@ -166,7 +168,7 @@
         memory.total = total;
         memory.gst = gst;
 
-        state = "confirm";
+        state = "confirm"; console.log("Moving to confirmation");
         addMessage(`Booking Summary:<br>
 Name: ${memory.name}<br>
 Room: ${memory.roomType} ${memory.roomName}<br>
