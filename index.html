@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hotel Bot Trail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zippy Stays Bot</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #ece5dd;
+      background: #f3f3f3;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -15,13 +15,14 @@
       margin: 0;
     }
     .chat-container {
+      background: white;
       width: 360px;
       height: 600px;
-      background: #fff;
       border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      overflow: hidden;
     }
     .chat {
       flex: 1;
@@ -36,34 +37,23 @@
       border-radius: 10px;
       max-width: 80%;
     }
-    .bot {
-      align-self: flex-start;
-      background-color: #dcf8c6;
-    }
-    .user {
-      align-self: flex-end;
-      background-color: #34b7f1;
-      color: white;
-    }
+    .bot { align-self: flex-start; background-color: #dcf8c6; }
+    .user { align-self: flex-end; background-color: #34b7f1; color: white; }
     .input-area {
       display: flex;
-      padding: 10px;
       border-top: 1px solid #ccc;
     }
     .input-area input {
       flex: 1;
       padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 20px;
+      border: none;
       outline: none;
     }
     .input-area button {
-      margin-left: 10px;
-      padding: 10px 15px;
-      background-color: #128c7e;
-      color: white;
+      padding: 10px;
       border: none;
-      border-radius: 20px;
+      background: #128c7e;
+      color: white;
       cursor: pointer;
     }
   </style>
@@ -71,7 +61,7 @@
 <body>
   <div class="chat-container">
     <div class="chat" id="chat">
-      <div class="bot message">Welcome to Zippy Stays! ✨</div>
+      <div class="bot message">Hi! 👋 Welcome to Zippy Stays<br>1. Check room availability<br>2. Book a room<br>3. Talk to support</div>
     </div>
     <div class="input-area">
       <input type="text" id="userInput" placeholder="Type a message..." />
@@ -83,36 +73,113 @@
     const chat = document.getElementById("chat");
     const input = document.getElementById("userInput");
 
-    const botFlow = [
-      "Please choose room type:\n1. Standard\n2. Deluxe\n3. Suite",
-      "Deluxe room selected – ₹1999/night",
-      "Enter number of nights:",
-      "Total ₹3998. Confirm booking?",
-      "Booking confirmed ✅",
-      "<a href='payment.html' target='_blank'>Click to pay ₹3998</a>"
-    ];
+    let state = "start";
+    let memory = {
+      name: "", aadhaar: "", guests: 0, nights: 0, roomType: "", roomName: "",
+      roomPrice: 0, checkinDate: "", total: 0, gst: 0
+    };
 
-    let step = 0;
+    function addMessage(text, sender = "bot") {
+      const msg = document.createElement("div");
+      msg.className = sender + " message";
+      msg.innerHTML = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
 
     function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
 
-      const userMsg = document.createElement("div");
-      userMsg.className = "user message";
-      userMsg.textContent = text;
-      chat.appendChild(userMsg);
+      addMessage(text, "user");
       input.value = "";
-      chat.scrollTop = chat.scrollHeight;
+      handleInput(text);
+    }
 
-      setTimeout(() => {
-        const botMsg = document.createElement("div");
-        botMsg.className = "bot message";
-        botMsg.innerHTML = botFlow[step] || "Thank you!";
-        chat.appendChild(botMsg);
-        chat.scrollTop = chat.scrollHeight;
-        step++;
-      }, 1000);
+    function handleInput(inputText) {
+      const t = inputText.toLowerCase();
+
+      if (state === "start") {
+        if (t === "2" || t.includes("book")) {
+          state = "roomType";
+          addMessage("Please select room type:<br>1. AC<br>2. Non-AC");
+        }
+      }
+      else if (state === "roomType") {
+        if (t === "1" || t.includes("ac")) {
+          memory.roomType = "AC";
+          state = "roomSelect";
+          addMessage("AC Rooms:<br>1. Standard – ₹1499<br>2. Deluxe – ₹1999<br>3. Suite – ₹2999");
+        } else {
+          memory.roomType = "Non-AC";
+          state = "roomSelect";
+          addMessage("Non-AC Rooms:<br>1. Standard – ₹999<br>2. Double Bed – ₹1299");
+        }
+      }
+      else if (state === "roomSelect") {
+        if (["1", "standard"].includes(t)) {
+          memory.roomName = "Standard";
+          memory.roomPrice = memory.roomType === "AC" ? 1499 : 999;
+        } else if (["2", "deluxe", "double"].includes(t)) {
+          memory.roomName = memory.roomType === "AC" ? "Deluxe" : "Double Bed";
+          memory.roomPrice = memory.roomType === "AC" ? 1999 : 1299;
+        } else if (t === "3" && memory.roomType === "AC") {
+          memory.roomName = "Suite";
+          memory.roomPrice = 2999;
+        }
+        state = "name";
+        addMessage("Please enter your full name:");
+      }
+      else if (state === "name") {
+        memory.name = inputText;
+        state = "aadhaar";
+        addMessage("Enter your Aadhaar number:");
+      }
+      else if (state === "aadhaar") {
+        memory.aadhaar = inputText;
+        state = "guests";
+        addMessage("How many guests?");
+      }
+      else if (state === "guests") {
+        memory.guests = parseInt(inputText);
+        state = "nights";
+        addMessage("How many nights?");
+      }
+      else if (state === "nights") {
+        memory.nights = parseInt(inputText);
+        state = "date";
+        addMessage("Choose check-in date:<br>1. Today<br>2. Tomorrow<br>3. Choose a date 📅");
+      }
+      else if (state === "date") {
+        let today = new Date();
+        if (t === "1" || t.includes("today")) {
+          memory.checkinDate = today.toDateString();
+        } else if (t === "2" || t.includes("tomorrow")) {
+          today.setDate(today.getDate() + 1);
+          memory.checkinDate = today.toDateString();
+        } else {
+          memory.checkinDate = "30 June 2025";
+        }
+        let base = memory.roomPrice * memory.nights;
+        let gst = +(base * 0.12).toFixed(2);
+        let total = +(base + gst).toFixed(2);
+        memory.total = total;
+        memory.gst = gst;
+
+        state = "confirm";
+        addMessage(`Booking Summary:<br>
+Name: ${memory.name}<br>
+Room: ${memory.roomType} ${memory.roomName}<br>
+Guests: ${memory.guests}<br>
+Nights: ${memory.nights}<br>
+Check-in: ${memory.checkinDate}<br>
+Base: ₹${base}<br>
+GST (12%): ₹${gst}<br>
+Total: ₹${total}<br><br>Confirm booking? (Yes/No)`);
+      }
+      else if (state === "confirm" && t.includes("yes")) {
+        addMessage("Booking Confirmed ✅<br><a href='payment.html' target='_blank'>Click here to pay ₹" + memory.total + "</a>");
+      }
     }
   </script>
 </body>
