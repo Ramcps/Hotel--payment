@@ -1,212 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zippy Stays Bot</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f3f3;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .chat-container {
-      background: white;
-      width: 360px;
-      height: 600px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .chat {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    .message {
-      margin: 5px 0;
-      padding: 10px;
-      border-radius: 10px;
-      max-width: 80%;
-    }
-    .bot { align-self: flex-start; background-color: #dcf8c6; }
-    .user { align-self: flex-end; background-color: #34b7f1; color: white; }
-    .input-area {
-      display: flex;
-      border-top: 1px solid #ccc;
-    }
-    .input-area input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
-    }
-    .input-area button {
-      padding: 10px;
-      border: none;
-      background: #128c7e;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zippy Hotel Booking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            background: #f4f4f4;
+        }
+        .form-container {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #218838;
+        }
+        #viewBookings {
+            background: #007bff;
+        }
+        #viewBookings:hover {
+            background: #0056b3;
+        }
+        #confirmation {
+            display: none;
+            color: #28a745;
+            font-size: 18px;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #28a745;
+            border-radius: 5px;
+        }
+        #bookingsList {
+            margin-top: 20px;
+            display: none;
+        }
+        #bookingsList p {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        @media (max-width: 600px) {
+            input, button {
+                font-size: 14px;
+            }
+            .form-container {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="chat-container">
-    <div class="chat" id="chat">
-      <div class="bot message">Hi! 👋 Welcome to Zippy Stays<br>1. Check room availability<br>2. Book a room<br>3. Talk to support</div>
+    <h2>Zippy Hotel Booking</h2>
+    <div class="form-container">
+        <form id="bookingForm">
+            <input type="text" id="city" placeholder="Enter city (e.g., Hyderabad)" required>
+            <input type="text" id="hotel" placeholder="Hotel name (e.g., Taj Krishna)" required>
+            <input type="date" id="checkIn" placeholder="Check-in date" required>
+            <input type="date" id="checkOut" placeholder="Check-out date" required>
+            <input type="number" id="guests" placeholder="Number of guests" min="1" required>
+            <button type="submit">Pay & Book Now</button>
+        </form>
+        <p id="confirmation"></p>
+        <button id="viewBookings">View Past Bookings</button>
+        <div id="bookingsList"></div>
     </div>
-    <div class="input-area">
-      <input type="text" id="userInput" placeholder="Type a message..." />
-      <button id="sendBtn">Send</button>
-    </div>
-  </div>
 
-  <script>
-    const chat = document.getElementById("chat");
-    const input = document.getElementById("userInput");
+    <script>
+        document.getElementById("bookingForm").addEventListener("submit", function(e) {
+            e.preventDefault(); // Prevent page reload
+            let city = document.getElementById("city").value.trim();
+            let hotel = document.getElementById("hotel").value.trim();
+            let checkIn = new Date(document.getElementById("checkIn").value);
+            let checkOut = new Date(document.getElementById("checkOut").value);
+            let guests = parseInt(document.getElementById("guests").value);
+            let today = new Date();
 
-    let state = "start";
-    let memory = {
-      name: "", aadhaar: "", guests: 0, nights: 0, roomType: "", roomName: "",
-      roomPrice: 0, checkinDate: "", total: 0, gst: 0
-    };
+            // Validation
+            if (!city || city.length < 2) {
+                alert("Please enter a valid city name.");
+                return;
+            }
+            if (!hotel || hotel.length < 2) {
+                alert("Please enter a valid hotel name.");
+                return;
+            }
+            if (!checkIn || checkIn < today) {
+                alert("Check-in date must be today or later.");
+                return;
+            }
+            if (!checkOut || checkOut <= checkIn) {
+                alert("Check-out date must be after check-in.");
+                return;
+            }
+            if (!guests || guests < 1) {
+                alert("Number of guests must be at least 1.");
+                return;
+            }
 
-    function addMessage(text, sender = "bot") {
-      const msg = document.createElement("div");
-      msg.className = sender + " message";
-      msg.innerHTML = text;
-      chat.appendChild(msg);
-      chat.scrollTop = chat.scrollHeight;
-    }
+            // Simulate booking and payment
+            let booking = {
+                city: city,
+                hotel: hotel,
+                checkIn: checkIn.toISOString().split('T')[0],
+                checkOut: checkOut.toISOString().split('T')[0],
+                guests: guests,
+                bookingId: `ZIPPY${Math.floor(Math.random() * 10000)}`,
+                transactionId: `TXN${Math.floor(Math.random() * 1000000)}`,
+                amount: (guests * 5000).toFixed(2) // ₹5000 per guest
+            };
 
-    function sendMessage() {
-      const text = input.value.trim();
-      if (!text) return;
-      addMessage(text, "user");
-      input.value = "";
-      handleInput(text);
-    }
+            // Save to localStorage
+            let bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
+            bookings.push(booking);
+            localStorage.setItem("bookings", JSON.stringify(bookings));
 
-    function handleInput(t) {
-      t = t.toLowerCase();
-
-      if (state === "start") {
-        if (t === "1" || t.includes("availability")) {
-          addMessage("📢 Room Availability Today:<br>AC Standard – 3<br>AC Deluxe – 2<br>AC Suite – 1<br>Non-AC Standard – 5<br>Non-AC Double Bed – 4<br><br>To book, type 2");
-          return;
-        }
-        if (t === "3" || t.includes("support")) {
-          addMessage("📞 Contact Support:<br>Call us: 1800-123-ZIPPY<br>WhatsApp: <a href='https://wa.me/919876543210' target='_blank'>Chat Now</a>");
-          return;
-        }
-        if (t === "2" || t.includes("book")) {
-          state = "roomType";
-          addMessage("Please select room type:<br>1. AC<br>2. Non-AC");
-        }
-      } else if (state === "roomType") {
-        memory.roomType = t.includes("1") || t.includes("ac") ? "AC" : "Non-AC";
-        state = "roomSelect";
-        addMessage(memory.roomType === "AC" ?
-          "AC Rooms:<br>1. Standard – ₹1499<br>2. Deluxe – ₹1999<br>3. Suite – ₹2999" :
-          "Non-AC Rooms:<br>1. Standard – ₹999<br>2. Double Bed – ₹1299");
-      } else if (state === "roomSelect") {
-        const rt = memory.roomType;
-        if (t === "1") {
-          memory.roomName = "Standard";
-          memory.roomPrice = rt === "AC" ? 1499 : 999;
-        } else if (t === "2") {
-          memory.roomName = rt === "AC" ? "Deluxe" : "Double Bed";
-          memory.roomPrice = rt === "AC" ? 1999 : 1299;
-        } else if (t === "3" && rt === "AC") {
-          memory.roomName = "Suite";
-          memory.roomPrice = 2999;
-        }
-        state = "name";
-        addMessage("Enter your full name:");
-      } else if (state === "name") {
-        memory.name = t;
-        state = "aadhaar";
-        addMessage("Enter your Aadhaar number:");
-      } else if (state === "aadhaar") {
-        memory.aadhaar = t;
-        state = "guests";
-        addMessage("How many guests?");
-      } else if (state === "guests") {
-        memory.guests = parseInt(t);
-        state = "nights";
-        addMessage("How many nights?");
-      } else if (state === "nights") {
-        memory.nights = parseInt(t);
-        state = "date";
-        addMessage("📅 Please select your check-in date:");
-
-        const wrapper = document.createElement("div");
-        wrapper.style.marginTop = "10px";
-
-        const dateInput = document.createElement("input");
-        dateInput.type = "date";
-        dateInput.style.marginRight = "10px";
-
-        const continueBtn = document.createElement("button");
-        continueBtn.innerText = "Continue";
-        continueBtn.disabled = true;
-        continueBtn.style.background = "#128c7e";
-        continueBtn.style.color = "white";
-        continueBtn.style.border = "none";
-        continueBtn.style.padding = "5px 10px";
-        continueBtn.style.borderRadius = "5px";
-
-        dateInput.addEventListener("change", () => {
-          memory.checkinDate = new Date(dateInput.value).toDateString();
-          continueBtn.disabled = false;
+            // Show confirmation
+            document.getElementById("confirmation").style.display = "block";
+            document.getElementById("confirmation").innerText = 
+                `Booking Successful!\nBooking ID: ${booking.bookingId}\nHotel: ${booking.hotel}, ${booking.city}\nGuests: ${booking.guests}\nDates: ${booking.checkIn} to ${booking.checkOut}\nPayment: ₹${booking.amount} (Transaction ID: ${booking.transactionId})`;
+            document.getElementById("bookingForm").reset();
         });
 
-        continueBtn.addEventListener("click", () => {
-          proceedToConfirmation();
-          wrapper.remove();
+        // View past bookings
+        document.getElementById("viewBookings").addEventListener("click", function() {
+            let bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
+            let bookingsList = document.getElementById("bookingsList");
+            bookingsList.style.display = "block";
+            if (bookings.length === 0) {
+                bookingsList.innerText = "No bookings found.";
+                return;
+            }
+            bookingsList.innerHTML = "<h3>Past Bookings</h3>";
+            bookings.forEach(booking => {
+                bookingsList.innerHTML += `<p>Booking ID: ${booking.bookingId} | Hotel: ${booking.hotel}, ${booking.city} | Guests: ${booking.guests} | Dates: ${booking.checkIn} to ${booking.checkOut} | Paid: ₹${booking.amount} (TXN: ${booking.transactionId})</p>`;
+            });
         });
-
-        wrapper.appendChild(dateInput);
-        wrapper.appendChild(continueBtn);
-        chat.appendChild(wrapper);
-        chat.scrollTop = chat.scrollHeight;
-        return;
-      } else if (state === "confirm" && t.includes("yes")) {
-        addMessage("Booking Confirmed ✅<br><a href='payment.html' target='_blank'>Click here to pay ₹" + memory.total + "</a>");
-      }
-    }
-
-    function proceedToConfirmation() {
-      let base = memory.roomPrice * memory.nights;
-      let gst = +(base * 0.12).toFixed(2);
-      let total = +(base + gst).toFixed(2);
-      memory.total = total;
-      memory.gst = gst;
-
-      state = "confirm";
-      addMessage(`Booking Summary:<br>
-Name: ${memory.name}<br>
-Room: ${memory.roomType} ${memory.roomName}<br>
-Guests: ${memory.guests}<br>
-Nights: ${memory.nights}<br>
-Check-in: ${memory.checkinDate}<br>
-Base: ₹${base}<br>
-GST (12%): ₹${gst}<br>
-Total: ₹${total}<br><br>Confirm booking? (Yes/No)`);
-    }
-
-    document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    input.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") sendMessage();
-    });
-  </script>
+    </script>
 </body>
 </html>
