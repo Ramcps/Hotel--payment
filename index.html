@@ -1,97 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zippy Bot Automation</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zippy Bot Booking – Phase 1</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
+      font-family: sans-serif;
+      background: #f7f9fc;
       padding: 20px;
     }
-    .chat-box {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      width: 100%;
-      max-width: 600px;
+
+    .container {
+      max-width: 500px;
       margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      background: #fff;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
     }
-    .message {
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 10px;
+
+    h2 {
+      text-align: center;
+      color: #333;
     }
-    .bot {
-      background: #e0f7fa;
-      text-align: left;
-    }
-    .user {
-      background: #c8e6c9;
-      text-align: right;
-    }
-    .button {
+
+    .slots {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
       margin-top: 20px;
-      padding: 10px 15px;
+    }
+
+    .slot {
+      padding: 15px;
+      background: #e3f2fd;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .slot:hover {
+      background: #bbdefb;
+    }
+
+    .selected {
+      background: #2196f3;
+      color: white;
+      border-color: #0d47a1;
+    }
+
+    .confirm {
+      margin-top: 25px;
+      text-align: center;
+    }
+
+    .confirm button {
+      padding: 12px 30px;
       font-size: 16px;
-      background: #007bff;
+      background: #4caf50;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
+    }
+
+    .confirm button:hover {
+      background: #388e3c;
+    }
+
+    .bill {
+      margin-top: 20px;
+      background: #f1f8e9;
+      padding: 15px;
+      border-radius: 10px;
+      display: none;
+      text-align: center;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h2>Zippy Bot – Room Booking</h2>
+    <div class="slots">
+      <div class="slot">Room A<br>10:00 – 11:00</div>
+      <div class="slot">Room B<br>11:00 – 12:00</div>
+      <div class="slot">Room C<br>12:00 – 1:00</div>
+      <div class="slot">Room D<br>1:00 – 2:00</div>
+    </div>
 
-  <div class="chat-box" id="chatBox">
-    <h2>Zippy Bot 🤖</h2>
-  </div>
+    <div class="confirm">
+      <button onclick="confirmBooking()">Confirm Booking</button>
+    </div>
 
-  <div style="text-align: center;">
-    <button class="button" onclick="startAutomation()">Start Automation</button>
+    <div class="bill" id="billBox"></div>
   </div>
 
   <script>
-    const chatBox = document.getElementById("chatBox");
+    const slots = document.querySelectorAll('.slot');
+    const billBox = document.getElementById('billBox');
+    let selectedSlot = null;
 
-    const chatFlow = [
-      { sender: "bot", text: "Hello! Welcome to Zippy Hotel. How can I help you today?" },
-      { sender: "user", text: "Hi, I want to book a room" },
-      { sender: "bot", text: "Great! Double room selected." },
-      { sender: "user", text: "I need a double room" },
-      { sender: "bot", text: "2 nights stay – got it." },
-      { sender: "user", text: "For 2 nights" },
-      { sender: "bot", text: "Check-in from 1st July." },
-      { sender: "user", text: "From 1st July" },
-      { sender: "bot", text: "The price is ₹3000 per night. Total ₹6000." },
-      { sender: "user", text: "What's the price?" },
-      { sender: "bot", text: "Booking confirmed!" },
-      { sender: "user", text: "Ok, book it" },
-      { sender: "bot", text: "You're welcome! Enjoy your stay." },
-      { sender: "user", text: "Done. Thanks!" }
-    ];
+    slots.forEach(slot => {
+      slot.addEventListener('click', () => {
+        slots.forEach(s => s.classList.remove('selected'));
+        slot.classList.add('selected');
+        selectedSlot = slot.textContent.trim();
+      });
+    });
 
-    let index = 0;
+    function confirmBooking() {
+      if (selectedSlot) {
+        const billId = 'ZP-' + Math.floor(Math.random() * 90000 + 10000);
+        const bookingInfo = {
+          id: billId,
+          slot: selectedSlot,
+          time: new Date().toLocaleString()
+        };
 
-    function displayMessage(msg) {
-      const div = document.createElement("div");
-      div.className = `message ${msg.sender}`;
-      div.innerText = msg.text;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
+        localStorage.setItem('zippyBooking', JSON.stringify(bookingInfo));
 
-    function startAutomation() {
-      if (index < chatFlow.length) {
-        displayMessage(chatFlow[index]);
-        index++;
-        setTimeout(startAutomation, 1500); // Delay between messages
+        billBox.innerHTML = `
+          <strong>✅ Booking Confirmed!</strong><br/><br/>
+          <b>Bill ID:</b> ${billId}<br/>
+          <b>Room:</b> ${bookingInfo.slot}<br/>
+          <b>Time:</b> ${bookingInfo.time}
+        `;
+        billBox.style.display = 'block';
+      } else {
+        alert("❌ Please select a room before confirming.");
       }
     }
   </script>
-
 </body>
 </html>
