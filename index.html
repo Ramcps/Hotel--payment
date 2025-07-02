@@ -1,138 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zippy Bot Booking – Phase 1</title>
+  <title>Project X - Room Booking</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #f7f9fc;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: #fff;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    }
-
-    h2 {
       text-align: center;
-      color: #333;
+      background-color: #f2f2f2;
+      padding: 20px;
     }
-
-    .slots {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    .slot {
-      padding: 15px;
-      background: #e3f2fd;
+    .box {
+      background: white;
+      display: inline-block;
+      padding: 20px;
       border-radius: 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: 0.2s;
-      border: 2px solid transparent;
+      box-shadow: 0 0 10px #ccc;
     }
-
-    .slot:hover {
-      background: #bbdefb;
-    }
-
-    .selected {
-      background: #2196f3;
-      color: white;
-      border-color: #0d47a1;
-    }
-
-    .confirm {
-      margin-top: 25px;
-      text-align: center;
-    }
-
-    .confirm button {
-      padding: 12px 30px;
-      font-size: 16px;
-      background: #4caf50;
+    .btn {
+      display: block;
+      margin: 10px auto;
+      padding: 12px 25px;
+      background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
     }
-
-    .confirm button:hover {
-      background: #388e3c;
+    .btn:hover {
+      background-color: #3e8e41;
     }
-
-    .bill {
-      margin-top: 20px;
-      background: #f1f8e9;
-      padding: 15px;
-      border-radius: 10px;
+    .hidden {
       display: none;
-      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Zippy Bot – Room Booking</h2>
-    <div class="slots">
-      <div class="slot">Room A<br>10:00 – 11:00</div>
-      <div class="slot">Room B<br>11:00 – 12:00</div>
-      <div class="slot">Room C<br>12:00 – 1:00</div>
-      <div class="slot">Room D<br>1:00 – 2:00</div>
+
+  <div class="box">
+    <h2>🤖 Welcome to Project X</h2>
+    <p>How can I assist you today?</p>
+
+    <div id="main-options">
+      <button class="btn" onclick="showBooking()">Room Booking</button>
+      <button class="btn">Room Enquiry</button>
+      <button class="btn">Hotel Info</button>
+      <button class="btn">Checkout</button>
     </div>
 
-    <div class="confirm">
-      <button onclick="confirmBooking()">Confirm Booking</button>
+    <div id="ac-nonac" class="hidden">
+      <h3>Choose Room Category</h3>
+      <button class="btn" onclick="showAC()">AC</button>
+      <button class="btn" onclick="showNonAC()">NON-AC</button>
     </div>
 
-    <div class="bill" id="billBox"></div>
+    <div id="ac-options" class="hidden">
+      <h4>Choose AC Room</h4>
+      <button class="btn" onclick="confirmRoom('AC - Single')">Single</button>
+      <button class="btn" onclick="confirmRoom('AC - Double')">Double</button>
+      <button class="btn" onclick="confirmRoom('AC - Suite')">Suite</button>
+    </div>
+
+    <div id="nonac-options" class="hidden">
+      <h4>Choose NON-AC Room</h4>
+      <button class="btn" onclick="confirmRoom('NON-AC - Single')">Single</button>
+      <button class="btn" onclick="confirmRoom('NON-AC - Double')">Double</button>
+      <button class="btn" onclick="confirmRoom('NON-AC - Deluxe')">Deluxe</button>
+    </div>
+
+    <div id="confirmation" class="hidden">
+      <h3>✅ Booking Confirmed</h3>
+      <p id="room-type"></p>
+      <p>Booking ID: <span id="booking-id"></span></p>
+      <p>Time: <span id="timestamp"></span></p>
+    </div>
   </div>
 
   <script>
-    const slots = document.querySelectorAll('.slot');
-    const billBox = document.getElementById('billBox');
-    let selectedSlot = null;
+    function showBooking() {
+      document.getElementById("main-options").classList.add("hidden");
+      document.getElementById("ac-nonac").classList.remove("hidden");
+    }
 
-    slots.forEach(slot => {
-      slot.addEventListener('click', () => {
-        slots.forEach(s => s.classList.remove('selected'));
-        slot.classList.add('selected');
-        selectedSlot = slot.textContent.trim();
-      });
-    });
+    function showAC() {
+      document.getElementById("ac-options").classList.remove("hidden");
+      document.getElementById("nonac-options").classList.add("hidden");
+    }
 
-    function confirmBooking() {
-      if (selectedSlot) {
-        const billId = 'ZP-' + Math.floor(Math.random() * 90000 + 10000);
-        const bookingInfo = {
-          id: billId,
-          slot: selectedSlot,
-          time: new Date().toLocaleString()
-        };
+    function showNonAC() {
+      document.getElementById("nonac-options").classList.remove("hidden");
+      document.getElementById("ac-options").classList.add("hidden");
+    }
 
-        localStorage.setItem('zippyBooking', JSON.stringify(bookingInfo));
+    function confirmRoom(type) {
+      const id = 'BILL' + Math.floor(100000 + Math.random() * 900000);
+      const now = new Date().toLocaleString();
 
-        billBox.innerHTML = `
-          <strong>✅ Booking Confirmed!</strong><br/><br/>
-          <b>Bill ID:</b> ${billId}<br/>
-          <b>Room:</b> ${bookingInfo.slot}<br/>
-          <b>Time:</b> ${bookingInfo.time}
-        `;
-        billBox.style.display = 'block';
-      } else {
-        alert("❌ Please select a room before confirming.");
-      }
+      document.getElementById("ac-nonac").classList.add("hidden");
+      document.getElementById("ac-options").classList.add("hidden");
+      document.getElementById("nonac-options").classList.add("hidden");
+
+      document.getElementById("room-type").innerText = "Room: " + type;
+      document.getElementById("booking-id").innerText = id;
+      document.getElementById("timestamp").innerText = now;
+
+      document.getElementById("confirmation").classList.remove("hidden");
     }
   </script>
+
 </body>
 </html>
