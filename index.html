@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Project X - Room Booking</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -15,6 +16,7 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 0 10px #ccc;
+      max-width: 400px;
     }
     .btn {
       display: block;
@@ -32,78 +34,593 @@
     .hidden {
       display: none;
     }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select, textarea { /* Added textarea for query/complaint forms */
+      padding: 8px;
+      width: 90%;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box; /* Ensures padding doesn't expand width */
+    }
+    /* Styles for new sections */
+    .section-content {
+      text-align: left;
+      padding: 10px;
+    }
+    .section-content h3 {
+      text-align: center;
+    }
+    .section-content p, .section-content ul {
+      margin-bottom: 10px;
+    }
+    .section-content ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    .section-content ul li {
+        background-color: #e9e9e9;
+        padding: 8px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+    }
+    .back-btn {
+      background-color: #f44336; /* Red color for back button */
+    }
+    .back-btn:hover {
+      background-color: #da190b;
+    }
+    .sub-support-btn { /* Style for sub-buttons within Support */
+      background-color: #008CBA; /* Blue color */
+    }
+    .sub-support-btn:hover {
+      background-color: #007bb5;
+    }
+    .service-note { /* New style for short service notes */
+        font-size: 0.9em;
+        color: #555;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        line-height: 1.4;
+        background-color: #f9f9f9;
+        border-left: 3px solid #4CAF50;
+        padding: 8px;
+        border-radius: 4px;
+    }
   </style>
 </head>
 <body>
 
   <div class="box">
-    <h2>🤖 Welcome to Project X</h2>
-    <p>How can I assist you today?</p>
+    <h2>🧑‍💼 Welcome to Project X</h2>
+    <p id="assist-line">How can I assist you today?</p>
 
     <div id="main-options">
       <button class="btn" onclick="showBooking()">Room Booking</button>
-      <button class="btn">Room Enquiry</button>
-      <button class="btn">Hotel Info</button>
-      <button class="btn">Checkout</button>
+      <button class="btn" onclick="showRoomService()">Room Service</button>
+      <button class="btn" onclick="showHotelInfo()">Hotel Info</button>
+      <button class="btn" onclick="showCheckout()">Checkout</button>
+      <button class="btn" onclick="showSupport()">Support</button>
     </div>
 
     <div id="ac-nonac" class="hidden">
-      <h3>Choose Room Category</h3>
+      <h3>Choose Your Room Type</h3>
       <button class="btn" onclick="showAC()">AC</button>
       <button class="btn" onclick="showNonAC()">NON-AC</button>
+      <button class="btn back-btn" onclick="showMainMenu()">Back to Main Menu</button>
     </div>
 
     <div id="ac-options" class="hidden">
-      <h4>Choose AC Room</h4>
-      <button class="btn" onclick="confirmRoom('AC - Single')">Single</button>
-      <button class="btn" onclick="confirmRoom('AC - Double')">Double</button>
-      <button class="btn" onclick="confirmRoom('AC - Suite')">Suite</button>
+      <h4>Choose AC Room (Prices incl. GST)</h4>
+      <button class="btn" onclick="selectRoom('AC - Single', 1500)">Single - Rs.1500</button>
+      <button class="btn" onclick="selectRoom('AC - Double', 2500)">Double - Rs.2500</button>
+      <button class="btn" onclick="selectRoom('AC - Suite', 4000)">Suite - Rs.4000</button>
+      <button class="btn back-btn" onclick="showBooking()">Back to Room Type</button>
     </div>
 
     <div id="nonac-options" class="hidden">
-      <h4>Choose NON-AC Room</h4>
-      <button class="btn" onclick="confirmRoom('NON-AC - Single')">Single</button>
-      <button class="btn" onclick="confirmRoom('NON-AC - Double')">Double</button>
-      <button class="btn" onclick="confirmRoom('NON-AC - Deluxe')">Deluxe</button>
+      <h4>Choose NON-AC Room (Prices incl. GST)</h4>
+      <button class="btn" onclick="selectRoom('NON-AC - Single', 1000)">Single - Rs.1000</button>
+      <button class="btn" onclick="selectRoom('NON-AC - Double', 1800)">Double - Rs.1800</button>
+      <button class="btn" onclick="selectRoom('NON-AC - Deluxe', 2200)">Deluxe - Rs.2200</button>
+      <button class="btn back-btn" onclick="showBooking()">Back to Room Type</button>
+    </div>
+
+    <div id="booking-form" class="hidden">
+      <h3>Guest Details</h3>
+      <form id="guestForm" onsubmit="submitBooking(event)">
+        <p><strong>Room Selected:</strong> <span id="selected-room"></span></p>
+        <p><strong>Price per day:</strong> Rs.<span id="selected-price"></span></p>
+
+        <label for="guestName">Name:</label>
+        <input type="text" id="guestName" name="guestName" required>
+
+        <label for="idProof">ID Proof:</label>
+        <input type="text" id="idProof" name="idProof" required placeholder="e.g. Aadhaar, Passport No">
+
+        <label for="stayDays">Number of Days:</label>
+        <select id="stayDays" name="stayDays" required>
+          <option value="" disabled selected>Select days</option>
+          <option value="1">1 Day</option>
+          <option value="2">2 Days</option>
+          <option value="3">3 Days</option>
+          <option value="custom">Custom Date Range</option>
+        </select>
+
+        <div id="custom-date-range" class="hidden">
+          <label for="checkInDate">Check-in Date:</label>
+          <input type="date" id="checkInDate" name="checkInDate">
+
+          <label for="checkOutDate">Check-out Date:</label>
+          <input type="date" id="checkOutDate" name="checkOutDate">
+        </div>
+
+        <button type="submit" class="btn">Confirm Booking</button>
+      </form>
+      <button class="btn back-btn" onclick="goBackToRoomSelection()">Back to Room Selection</button>
     </div>
 
     <div id="confirmation" class="hidden">
       <h3>✅ Booking Confirmed</h3>
       <p id="room-type"></p>
+      <p>Guest Name: <span id="guest-name-confirm"></span></p>
+      <p>ID Proof: <span id="id-proof-confirm"></span></p>
+      <p>Stay Duration: <span id="stay-duration"></span> days</p>
+      <p>Total Price (incl. GST): Rs.<span id="total-price"></span></p>
+      <p>GST (18%): Rs.<span id="gst-amount"></span></p>
       <p>Booking ID: <span id="booking-id"></span></p>
       <p>Time: <span id="timestamp"></span></p>
+      <button class="btn" onclick="downloadPDF()">Download Bill (PDF)</button>
+      <button class="btn back-btn" onclick="showMainMenu()">Back to Main Menu</button>
     </div>
+
+    <div id="hotel-info-section" class="hidden section-content">
+      <h3>🏨 About X Hotel</h3>
+      <p>Welcome to X Hotel, your premier destination for comfort and luxury in Kalyan. We are committed to providing an exceptional stay with top-notch amenities and personalized service.</p>
+      <p><strong>Address:</strong><br>
+         123, Hotel Lane, Kalyan, Maharashtra, India - 421301</p>
+      <p><strong>Contact:</strong><br>
+         Phone: +91 98765 43210<br>
+         Email: info@xhotel.com</p>
+      <p><strong>Location:</strong><br>
+         <a href="https://maps.app.goo.gl/YourHotelGoogleMapsLink" target="_blank">View on Google Maps</a><br>
+         (Please note: This is a placeholder link, replace with actual if available.)
+      </p>
+      <button class="btn back-btn" onclick="showMainMenu()">Back to Main Menu</button>
+    </div>
+
+    <div id="room-service-section" class="hidden section-content">
+      <h3>🛎️ Room Service Request</h3>
+      <p>To request a service, please select from the options below and provide your room number or booking ID.</p>
+
+      <form id="roomServiceForm" onsubmit="submitServiceRequest(event)">
+        <label for="serviceType">Select Service:</label>
+        <select id="serviceType" name="serviceType" required>
+          <option value="" disabled selected>Choose a service</option>
+          <option value="Laundry Service">Laundry Service</option>
+          <option value="Food & Beverage">Food & Beverage</option>
+          <option value="Housekeeping/Cleaning">Housekeeping/Cleaning</option>
+          <option value="Concierge Assistance">Concierge Assistance</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label for="customerIdentifier">Room No. / Booking ID:</label>
+        <input type="text" id="customerIdentifier" name="customerIdentifier" required placeholder="e.g., 101 or BILL123456">
+
+        <button type="submit" class="btn">Submit Request</button>
+      </form>
+      <div id="room-service-confirmation" class="hidden">
+        <p>✅ Your request for <span id="confirm-service-type"></span> for <span id="confirm-customer-identifier"></span> has been sent to reception. Our team will assist you shortly!</p>
+      </div>
+
+      <div class="service-note">
+        <strong>Food & Beverage:</strong> Available from **6:00 AM to 11:00 PM** daily. Enjoy a wide selection from our multi-cuisine menu.
+      </div>
+      <div class="service-note">
+        <strong>Laundry Service:</strong> Collection between **8:00 AM - 10:00 AM**. Delivery within **24 hours** for standard service. Express service available (extra charges apply).
+      </div>
+      <div class="service-note">
+        <strong>Housekeeping/Cleaning:</strong> Daily service from **9:00 AM to 5:00 PM**. Please hang the 'Make Up Room' sign on your door.
+      </div>
+      <div class="service-note">
+        <strong>Concierge Assistance:</strong> Available **24/7** for travel, local information, and special requests.
+      </div>
+
+      <button class="btn back-btn" onclick="showMainMenu()">Back to Main Menu</button>
+    </div>
+
+    <div id="checkout-section" class="hidden section-content">
+      <h3>👋 Checkout</h3>
+      <p>Please enter your room number to proceed with checkout or to inform us of your departure.</p>
+      <form id="checkoutForm" onsubmit="processCheckout(event)">
+        <label for="checkoutRoomNo">Room Number:</label>
+        <input type="text" id="checkoutRoomNo" name="checkoutRoomNo" required placeholder="e.g., 101, 205">
+        <button type="submit" class="btn">Confirm Checkout / Inform Hotel</button>
+      </form>
+      <div id="checkout-confirmation" class="hidden">
+        <p>Thank you! We have received your checkout request for Room <span id="confirm-room-no"></span>. Our staff will be with you shortly to assist.</p>
+      </div>
+      <button class="btn back-btn" onclick="showMainMenu()">Back to Main Menu</button>
+    </div>
+
+    <div id="support-section" class="hidden section-content">
+      <h3>📞 Support Center</h3>
+      <p>How can we assist you today?</p>
+      <button class="btn sub-support-btn" onclick="showCancelBooking()">Cancel Booking</button>
+      <button class="btn sub-support-btn" onclick="showRaiseQuery()">Raise a Query</button>
+      <button class="btn sub-support-btn" onclick="showReportComplaint()">Report a Complaint</button>
+      <button class="btn back-btn" onclick="showMainMenu()">Back to Main Menu</button>
+    </div>
+
+    <div id="cancel-booking-section" class="hidden section-content">
+        <h3>❌ Cancel Booking</h3>
+        <p>To cancel your booking, please provide your Booking ID.</p>
+        <form id="cancelBookingForm" onsubmit="processCancelBooking(event)">
+            <label for="cancelBookingId">Booking ID:</label>
+            <input type="text" id="cancelBookingId" name="cancelBookingId" required placeholder="e.g., BILL123456">
+            <button type="submit" class="btn">Submit Cancellation</button>
+        </form>
+        <div id="cancel-confirmation" class="hidden">
+            <p>Your cancellation request for Booking ID <span id="confirm-cancel-id"></span> has been received. We will contact you shortly regarding the status.</p>
+        </div>
+        <button class="btn back-btn" onclick="showSupport()">Back to Support</button>
+    </div>
+
+    <div id="raise-query-section" class="hidden section-content">
+        <h3>❓ Raise a Query</h3>
+        <p>Please describe your query below. Our team will get back to you.</p>
+        <form id="raiseQueryForm" onsubmit="processRaiseQuery(event)">
+            <label for="querySubject">Subject:</label>
+            <input type="text" id="querySubject" name="querySubject" required placeholder="e.g., Wi-Fi issue, Bill clarification">
+            <label for="queryDetails">Details:</label>
+            <textarea id="queryDetails" name="queryDetails" rows="4" required placeholder="Provide details about your query..."></textarea>
+            <button type="submit" class="btn">Submit Query</button>
+        </form>
+        <div id="query-confirmation" class="hidden">
+            <p>Your query regarding '<span id="confirm-query-subject"></span>' has been submitted. Thank you for reaching out!</p>
+        </div>
+        <button class="btn back-btn" onclick="showSupport()">Back to Support</button>
+    </div>
+
+    <div id="report-complaint-section" class="hidden section-content">
+        <h3>😡 Report a Complaint</h3>
+        <p>We are sorry you had an issue. Please detail your complaint, and we will address it promptly.</p>
+        <form id="reportComplaintForm" onsubmit="processReportComplaint(event)">
+            <label for="complaintSubject">Subject:</label>
+            <input type="text" id="complaintSubject" name="complaintSubject" required placeholder="e.g., Noise disturbance, Service quality">
+            <label for="complaintDetails">Details:</label>
+            <textarea id="complaintDetails" name="complaintDetails" rows="4" required placeholder="Describe your complaint in detail..."></textarea>
+            <button type="submit" class="btn">Submit Complaint</button>
+        </form>
+        <div id="complaint-confirmation" class="hidden">
+            <p>Your complaint regarding '<span id="confirm-complaint-subject"></span>' has been registered. We are committed to resolving this for you.</p>
+        </div>
+        <button class="btn back-btn" onclick="showSupport()">Back to Support</button>
+    </div>
+
   </div>
 
   <script>
-    function showBooking() {
+    let selectedRoomType = "";
+    let selectedRoomPrice = 0;
+    let guestDetails = {};
+
+    // Helper function to hide all sections and show specific one
+    function hideAllSections() {
       document.getElementById("main-options").classList.add("hidden");
+      document.getElementById("ac-nonac").classList.add("hidden");
+      document.getElementById("ac-options").classList.add("hidden");
+      document.getElementById("nonac-options").classList.add("hidden");
+      document.getElementById("booking-form").classList.add("hidden");
+      document.getElementById("confirmation").classList.add("hidden");
+      document.getElementById("hotel-info-section").classList.add("hidden");
+      document.getElementById("room-service-section").classList.add("hidden");
+      document.getElementById("checkout-section").classList.add("hidden");
+      document.getElementById("support-section").classList.add("hidden");
+      document.getElementById("cancel-booking-section").classList.add("hidden");
+      document.getElementById("raise-query-section").classList.add("hidden");
+      document.getElementById("report-complaint-section").classList.add("hidden");
+
+      document.getElementById("assist-line").style.display = "none";
+      document.getElementById("checkout-confirmation").classList.add("hidden");
+      document.getElementById("cancel-confirmation").classList.add("hidden");
+      document.getElementById("query-confirmation").classList.add("hidden");
+      document.getElementById("complaint-confirmation").classList.add("hidden");
+      document.getElementById("room-service-confirmation").classList.add("hidden");
+      document.getElementById("roomServiceForm").classList.remove("hidden"); // Ensure room service form is visible when navigating back
+    }
+
+    // Function to show main menu
+    function showMainMenu() {
+      hideAllSections();
+      document.getElementById("main-options").classList.remove("hidden");
+      document.getElementById("assist-line").style.display = "block";
+    }
+
+    // Existing Room Booking Functions
+    function showBooking() {
+      hideAllSections();
       document.getElementById("ac-nonac").classList.remove("hidden");
     }
 
     function showAC() {
+      hideAllSections();
       document.getElementById("ac-options").classList.remove("hidden");
-      document.getElementById("nonac-options").classList.add("hidden");
     }
 
     function showNonAC() {
+      hideAllSections();
       document.getElementById("nonac-options").classList.remove("hidden");
-      document.getElementById("ac-options").classList.add("hidden");
     }
 
-    function confirmRoom(type) {
-      const id = 'BILL' + Math.floor(100000 + Math.random() * 900000);
-      const now = new Date().toLocaleString();
+    function selectRoom(type, price) {
+      selectedRoomType = type;
+      selectedRoomPrice = price;
 
-      document.getElementById("ac-nonac").classList.add("hidden");
-      document.getElementById("ac-options").classList.add("hidden");
-      document.getElementById("nonac-options").classList.add("hidden");
+      hideAllSections();
+      document.getElementById("booking-form").classList.remove("hidden");
+      document.getElementById("selected-room").innerText = selectedRoomType;
+      document.getElementById("selected-price").innerText = selectedRoomPrice;
+      document.getElementById("guestForm").reset();
+      document.getElementById("custom-date-range").classList.add("hidden");
+    }
 
-      document.getElementById("room-type").innerText = "Room: " + type;
-      document.getElementById("booking-id").innerText = id;
-      document.getElementById("timestamp").innerText = now;
+    document.getElementById('stayDays').addEventListener('change', function () {
+      const customDiv = document.getElementById('custom-date-range');
+      if (this.value === 'custom') {
+        customDiv.classList.remove('hidden');
+        document.getElementById('checkInDate').required = true;
+        document.getElementById('checkOutDate').required = true;
+      } else {
+        customDiv.classList.add('hidden');
+        document.getElementById('checkInDate').required = false;
+        document.getElementById('checkOutDate').required = false;
+      }
+    });
 
+    function submitBooking(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('guestName').value.trim();
+      const idProof = document.getElementById('idProof').value.trim();
+      const days = document.getElementById('stayDays').value;
+
+      let stayDays = 0;
+
+      if (days === 'custom') {
+        const checkIn = new Date(document.getElementById('checkInDate').value);
+        const checkOut = new Date(document.getElementById('checkOutDate').value);
+        if (checkOut <= checkIn) return alert("Check-out must be after check-in.");
+        stayDays = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+      } else {
+        stayDays = parseInt(days);
+      }
+
+      const totalPrice = selectedRoomPrice * stayDays;
+      const gstAmount = Math.round(totalPrice * 0.18);
+      const bookingId = 'BILL' + Math.floor(100000 + Math.random() * 900000);
+      const timestamp = new Date().toLocaleString();
+
+      document.getElementById("room-type").innerText = "Room: " + selectedRoomType;
+      document.getElementById("guest-name-confirm").innerText = name;
+      document.getElementById("id-proof-confirm").innerText = idProof;
+      document.getElementById("stay-duration").innerText = stayDays;
+      document.getElementById("total-price").innerText = totalPrice;
+      document.getElementById("gst-amount").innerText = gstAmount;
+      document.getElementById("booking-id").innerText = bookingId;
+      document.getElementById("timestamp").innerText = timestamp;
+
+      guestDetails = {
+        name, idProof, stayDays, totalPrice, gstAmount,
+        bookingId, timestamp, roomType: selectedRoomType
+      };
+
+      hideAllSections();
       document.getElementById("confirmation").classList.remove("hidden");
+    }
+
+    function goBackToRoomSelection() {
+        hideAllSections();
+        if (selectedRoomType.includes('AC')) {
+            document.getElementById("ac-options").classList.remove("hidden");
+        } else if (selectedRoomType.includes('NON-AC')) {
+            document.getElementById("nonac-options").classList.remove("hidden");
+        } else {
+             document.getElementById("ac-nonac").classList.remove("hidden");
+        }
+    }
+
+
+    // Existing Functions for Main Menu Options
+
+    function showHotelInfo() {
+      hideAllSections();
+      document.getElementById("hotel-info-section").classList.remove("hidden");
+    }
+
+    // UPDATED Room Service Functions
+    function showRoomService() {
+      hideAllSections();
+      document.getElementById("room-service-section").classList.remove("hidden");
+      document.getElementById("roomServiceForm").reset(); // Reset form when shown
+    }
+
+    function submitServiceRequest(event) {
+        event.preventDefault();
+        const serviceType = document.getElementById('serviceType').value;
+        const customerIdentifier = document.getElementById('customerIdentifier').value.trim();
+
+        if (!serviceType) {
+            alert("Please select a service type.");
+            return;
+        }
+
+        document.getElementById('confirm-service-type').innerText = serviceType;
+        document.getElementById('confirm-customer-identifier').innerText = customerIdentifier;
+
+        document.getElementById('roomServiceForm').classList.add('hidden'); // Hide the form
+        document.getElementById('room-service-confirmation').classList.remove('hidden'); // Show confirmation
+
+        // In a real application, you would send this request to a backend/reception.
+        // E.g., console.log(`Service Request: ${serviceType} for ${customerIdentifier}`);
+    }
+
+    // Existing Checkout Functions
+    function showCheckout() {
+      hideAllSections();
+      document.getElementById("checkout-section").classList.remove("hidden");
+      document.getElementById("checkoutForm").reset();
+    }
+
+    function processCheckout(event) {
+      event.preventDefault();
+      const roomNo = document.getElementById('checkoutRoomNo').value.trim();
+      document.getElementById('confirm-room-no').innerText = roomNo;
+      document.getElementById('checkout-confirmation').classList.remove('hidden');
+    }
+
+    // Existing Support Functions
+
+    function showSupport() {
+      hideAllSections();
+      document.getElementById("support-section").classList.remove("hidden");
+    }
+
+    function showCancelBooking() {
+      hideAllSections();
+      document.getElementById("cancel-booking-section").classList.remove("hidden");
+      document.getElementById("cancelBookingForm").reset();
+    }
+
+    function processCancelBooking(event) {
+        event.preventDefault();
+        const bookingIdToCancel = document.getElementById('cancelBookingId').value.trim();
+        document.getElementById('confirm-cancel-id').innerText = bookingIdToCancel;
+        document.getElementById('cancel-confirmation').classList.remove('hidden');
+    }
+
+    function showRaiseQuery() {
+      hideAllSections();
+      document.getElementById("raise-query-section").classList.remove("hidden");
+      document.getElementById("raiseQueryForm").reset();
+    }
+
+    function processRaiseQuery(event) {
+        event.preventDefault();
+        const querySubject = document.getElementById('querySubject').value.trim();
+        document.getElementById('confirm-query-subject').innerText = querySubject;
+        document.getElementById('query-confirmation').classList.remove('hidden');
+    }
+
+    function showReportComplaint() {
+      hideAllSections();
+      document.getElementById("report-complaint-section").classList.remove("hidden");
+      document.getElementById("reportComplaintForm").reset();
+    }
+
+    function processReportComplaint(event) {
+        event.preventDefault();
+        const complaintSubject = document.getElementById('complaintSubject').value.trim();
+        document.getElementById('confirm-complaint-subject').innerText = complaintSubject;
+        document.getElementById('complaint-confirmation').classList.remove('hidden');
+    }
+
+
+    // PDF Download Function (unchanged)
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Set up font and size
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(10);
+
+      // Header Section
+      doc.setFontSize(18);
+      doc.setFont("Helvetica", "bold");
+      doc.text("X Hotel", 105, 20, null, null, "center"); // Hotel Name
+      doc.setFontSize(10);
+      doc.setFont("Helvetica", "normal");
+      doc.text("123, Hotel Lane, Kalyan, Maharashtra, India - 421301", 105, 27, null, null, "center"); // Address
+      doc.text("Phone: +91 98765 43210 | Email: info@xhotel.com", 105, 33, null, null, "center"); // Contact Info
+
+      doc.setDrawColor(0); // Black line
+      doc.setLineWidth(0.5);
+      doc.line(10, 40, 200, 40); // Horizontal line
+
+      // Invoice Details
+      doc.setFontSize(14);
+      doc.setFont("Helvetica", "bold");
+      doc.text("TAX INVOICE", 10, 50);
+      doc.setFontSize(10);
+      doc.setFont("Helvetica", "normal");
+      doc.text(`Invoice No: ${guestDetails.bookingId}`, 10, 60);
+      doc.text(`Invoice Date: ${new Date().toLocaleDateString()}`, 10, 67);
+      doc.text(`Time: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, 10, 74);
+
+      // Guest Details
+      doc.setFontSize(12);
+      doc.setFont("Helvetica", "bold");
+      doc.text("BILL TO:", 10, 85);
+      doc.setFontSize(10);
+      doc.setFont("Helvetica", "normal");
+      doc.text(`Guest Name: ${guestDetails.name}`, 10, 92);
+      doc.text(`ID Proof: ${guestDetails.idProof}`, 10, 99);
+      doc.text(`Check-in: ${new Date().toLocaleDateString()}`, 10, 106); // Assuming current date for check-in
+      doc.text(`Check-out: ${new Date(new Date().setDate(new Date().getDate() + guestDetails.stayDays)).toLocaleDateString()}`, 10, 113); // Calculate check-out date
+
+      doc.line(10, 120, 200, 120); // Horizontal line
+
+      // Table Header
+      let yPos = 130;
+      doc.setFont("Helvetica", "bold");
+      doc.text("Description", 15, yPos);
+      doc.text("Unit Price (Rs.)", 100, yPos);
+      doc.text("Qty", 140, yPos);
+      doc.text("Amount (Rs.)", 175, yPos);
+      yPos += 7;
+      doc.line(10, yPos, 200, yPos); // Horizontal line
+
+      // Item Row
+      yPos += 7;
+      const basePricePerDay = selectedRoomPrice;
+      const roomCharge = basePricePerDay * guestDetails.stayDays;
+      doc.setFont("Helvetica", "normal");
+      doc.text(`${guestDetails.roomType} Room Charge`, 15, yPos);
+      doc.text(`${basePricePerDay.toFixed(2)}`, 100, yPos);
+      doc.text(`${guestDetails.stayDays}`, 140, yPos);
+      doc.text(`${roomCharge.toFixed(2)}`, 175, yPos);
+      yPos += 10;
+
+      // Totals
+      doc.line(10, yPos, 200, yPos); // Horizontal line
+      yPos += 7;
+      doc.setFont("Helvetica", "bold");
+      doc.text("Sub Total:", 140, yPos);
+      doc.text(`${roomCharge.toFixed(2)}`, 175, yPos);
+      yPos += 7;
+      doc.text("GST (18%):", 140, yPos);
+      doc.text(`${guestDetails.gstAmount.toFixed(2)}`, 175, yPos);
+      yPos += 7;
+      doc.setFontSize(14);
+      doc.text("Total Amount:", 140, yPos);
+      doc.text(`Rs.${guestDetails.totalPrice.toFixed(2)}`, 175, yPos);
+      yPos += 15;
+
+      // Footer
+      doc.setFontSize(10);
+      doc.setFont("Helvetica", "normal");
+      doc.text("Thank you for your business!", 10, yPos);
+      yPos += 5;
+      doc.text("Please visit us again.", 10, yPos);
+
+      doc.text("Authorized Signature", 160, yPos);
+
+      doc.save("XHotel_Invoice.pdf");
     }
   </script>
 
